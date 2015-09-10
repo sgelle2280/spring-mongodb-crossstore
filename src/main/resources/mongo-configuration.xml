@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.springframework.org/schema/beans"
+	xmlns:context="http://www.springframework.org/schema/context" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:mongo="http://www.springframework.org/schema/data/mongo"
+	xmlns:c="http://www.springframework.org/schema/c"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+		http://www.springframework.org/schema/data/mongo
+   		http://www.springframework.org/schema/data/mongo/spring-mongo-1.0.xsd">
+
+	<context:property-placeholder location="classpath:database.properties"/>
+
+
+	<!-- Activate Spring Data MongoDB repository support -->
+  	<mongo:repositories base-package="com.hcc.riab.repositories" />
+  	
+  	<!-- MongoDB host -->
+	<mongo:mongo host="${mongo.host.name}" port="${mongo.host.port}"/>
+
+	<!-- Template for performing MongoDB operations -->
+  	<bean id="mongoTemplate" class="org.springframework.data.mongodb.core.MongoTemplate" 
+  			c:mongo-ref="mongo" c:databaseName="${mongo.db.name}"/>
+	
+	<!-- Service for initializing MongoDB with sample data using MongoTemplate -->
+	<bean id="initMongoService" class="com.hcc.riab.service.InitMongoService" init-method="init"/>	
+
+	<bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">
+	    <property name="entityManagerFactory" ref="entityManagerFactory" />
+	</bean>
+
+	<bean class="org.springframework.data.mongodb.core.MongoExceptionTranslator" />	
+	
+	<!-- Mongo cross-store aspect config -->
+	<bean
+		 class="org.springframework.data.mongodb.crossstore.MongoDocumentBacking"
+		 factory-method="aspectOf">
+		 <property name="changeSetPersister" ref="mongoChangeSetPersister" />
+	</bean>
+	 
+	<bean id="mongoChangeSetPersister"
+		 class="org.springframework.data.mongodb.crossstore.MongoChangeSetPersister">
+		 <property name="mongoTemplate" ref="mongoTemplate" />
+		 <property name="entityManagerFactory" ref="entityManagerFactory" />
+	</bean>
+	  
+</beans>
